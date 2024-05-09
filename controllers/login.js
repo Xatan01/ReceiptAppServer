@@ -5,7 +5,7 @@ const connection = mysql.createConnection({
   host: 'localhost',
   user: 'your_username',
   password: 'your_password',
-  database: 'your_database_name'
+  database: 'user'
 });
 
 // Connect to the database
@@ -29,11 +29,19 @@ function authenticateUser(username, password, callback) {
   });
 }
 
-// Usage example
-authenticateUser('john_doe', 'hashed_password', (err, authenticated) => {
-  if (err) {
-    console.error('Error:', err);
-    return;
-  }
-  console.log('User authenticated:', authenticated);
-});
+// Method to register a new user
+function registerUser(username, password, callback) {
+  const sql = 'INSERT INTO users (username, password) VALUES (?, ?)';
+  connection.query(sql, [username, password], (err, results) => {
+    if (err) {
+      callback(err);
+      return;
+    }
+    callback(null);
+  });
+}
+
+module.exports = {
+  authenticateUser,
+  registerUser
+};
