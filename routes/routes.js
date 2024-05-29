@@ -23,7 +23,8 @@ function fileFilter(req, file, cb) {
 }
 
 const {
-  handleScan
+  handleScan,
+  handleHistory
 } = require("../controllers/applicationService");
 
 // Debugging tool: Displays any routed function performed by this routes file
@@ -34,5 +35,8 @@ router.use(function (req, res, next) {
 
 // Define the route for the scanner API
 router.post("/api/scan", upload.single('file'), handleScan);
+
+// Define the route for fetching scan history
+router.get("/api/history", handleHistory);
 
 module.exports = router;
