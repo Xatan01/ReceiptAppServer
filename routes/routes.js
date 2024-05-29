@@ -11,7 +11,7 @@ const upload = multer({
     });
 
 function fileFilter(req, file, cb) {
-  const filetypes = /jpeg|jpg|png|pdf/;
+  const filetypes = /jpeg|jpg|png|pdf|jfif/;
   const mimetype = filetypes.test(file.mimetype);
   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
 
