@@ -1,6 +1,8 @@
 const { processScan } = require('./textractService');
-const { extractFieldsWithOpenAI } = require('./openaiService'); // Updated to use OpenAI service
-const { saveScan, getScanHistory } = require('./dynamoService');
+const { extractFieldsWithOpenAI } = require('./openaiService');
+const { saveScan, getScanHistory, deleteScans } = require('./dynamoService');
+const { convertImageToPDF } = require('./createPDF');
+const { MimeType } = require('@adobe/pdfservices-node-sdk');
 
 const handleScan = async (req, res) => {
     try {
@@ -11,11 +13,15 @@ const handleScan = async (req, res) => {
             return res.status(400).send({ error: "No file uploaded" });
         }
 
-        console.log("Starting scan...");
-        const textractResult = await processScan(file);
-        console.log("Scan complete:", textractResult);
+        console.log("Starting Adobe PDF conversion...");
+        const pdfBuffer = await convertImageToPDF(file.buffer, MimeType.JPEG); // Adjust mimeType as needed
+        console.log("Adobe PDF conversion complete");
 
-        const allText = textractResult.text; // Assuming textractResult.text is a string
+        console.log("Starting Textract scan...");
+        const textractResult = await processScan({ buffer: pdfBuffer });
+        console.log("Textract scan complete:", textractResult);
+
+        const allText = textractResult.text.join('\n'); // Assuming textractResult.text is an array of lines
 
         console.log("Extracting fields with OpenAI...");
         const fields = await extractFieldsWithOpenAI([allText]); // Ensure allText is passed as an array
@@ -48,7 +54,22 @@ const handleHistory = async (req, res) => {
     }
 };
 
+const handleDeleteSelected = async (req, res) => {
+    try {
+        const { items } = req.body;
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).send({ error: "No items provided for deletion" });
+        }
+        await deleteScans(items);
+        res.status(200).send({ message: "Selected scans deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting selected scans:", error);
+        res.status(500).send({ error: "Failed to delete selected scans" });
+    }
+};
+
 module.exports = {
     handleScan,
     handleHistory,
+    handleDeleteSelected
 };

@@ -41,7 +41,30 @@ const getScanHistory = async () => {
     }
 };
 
+const deleteScans = async (ids) => {
+    const deleteRequests = ids.map(id => ({
+        DeleteRequest: {
+            Key: { id }
+        }
+    }));
+
+    const params = {
+        RequestItems: {
+            'ScanHistory': deleteRequests
+        }
+    };
+
+    try {
+        await docClient.batchWrite(params).promise();
+    } catch (error) {
+        console.error('Error deleting scan data from DynamoDB:', error);
+        throw new Error('Could not delete scan data');
+    }
+};
+
+
 module.exports = {
     saveScan,
     getScanHistory,
+    deleteScans // Export deleteScans function
 };

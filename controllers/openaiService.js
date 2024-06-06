@@ -1,5 +1,3 @@
-// openaiService.js
-
 const OpenAI = require("openai");
 require("dotenv").config();
 
@@ -24,7 +22,7 @@ async function extractFieldsWithOpenAI(textArray) {
           - **Invoice Date:** (DD/MM/YY format)
           - **Invoice Number:**
           - **Total Amount:** (Include currency symbol if present)
-          - **Classification:** (Strictly "Medical" or "Non-Medical")
+          - **Classification:** (Strictly "Medical", "Dental", or "Non-Medical")
           
           Text:
           ${textArray.join('\n')}
