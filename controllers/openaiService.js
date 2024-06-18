@@ -1,14 +1,12 @@
 const OpenAI = require("openai");
 require("dotenv").config();
 
-async function extractFieldsWithOpenAI(textArray) {
-  try {
-    // Initialize the OpenAI API client with the API key from the environment variable
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY, // Use your OpenAI API key
-    });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-    // Prepare the messages for the chat completion request
+async function extractFieldsWithOpenAI(base64Image, textArray) {
+  try {
     const messages = [
       {
         role: "system",
@@ -16,9 +14,9 @@ async function extractFieldsWithOpenAI(textArray) {
       },
       {
         role: "user",
-        content: `
-          Extract the following fields from the text:
-          
+        content: [
+          { type: "text", text: `Extract the following fields from the text:
+        
           - **Invoice Date:** (DD/MM/YY format)
           - **Invoice Number:**
           - **Total Amount:** (Include currency symbol if present)
@@ -29,35 +27,40 @@ async function extractFieldsWithOpenAI(textArray) {
           
           Respond with JSON:
           
+          { "Invoice Date": "", "Invoice Number": "", "Total Amount": "", "Classification": "" }`
+          },
           {
-            "invoiceDate": "DD/MM/YY",
-            "invoiceNumber": "...",
-            "totalAmount": "...",
-            "classification": "Medical" // or "Non-Medical"
-          }
-        `
-      }
+            type: "image_base64",
+            image_base64: {
+              "base64": base64Image,
+            },
+          },
+        ],
+      },
     ];
 
-    // Make the chat completion request
+    console.log("Sending request to OpenAI with message:", JSON.stringify(messages, null, 2));
+
     const response = await openai.chat.completions.create({
+      model: "gpt-4o",
       messages: messages,
-      model: "gpt-3.5-turbo", // Use the correct model name
       max_tokens: 500,
-      temperature: 0, // 0 for deterministic output
+      temperature: 0,
     });
 
-    // Extract and parse the result from the response
-    const result = response.choices[0].message.content.trim();
+    let result = response.choices[0].message.content.trim();
+    console.log("OpenAI response:", result);
 
-    // Validate JSON before parsing (optional but recommended)
+    // Use regex to remove markdown markers
+    result = result.replace(/```json\n?|```/g, '').trim();
+
     try {
-      JSON.parse(result);
+      const parsedResult = JSON.parse(result);
+      return parsedResult;
     } catch (e) {
+      console.error("Failed to parse JSON:", result);
       throw new Error("OpenAI response was not valid JSON");
     }
-
-    return JSON.parse(result);
 
   } catch (error) {
     console.error("Error extracting fields:", error.message, error);

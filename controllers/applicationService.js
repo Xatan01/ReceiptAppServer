@@ -1,15 +1,12 @@
+require('dotenv').config();
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const AWS = require('aws-sdk');
+const AWS = require('../config/config');
 const { processScan } = require('./textractService');
-const { extractFieldsWithOpenAI } = require('./openaiService');
 const { saveScan, getScanHistory, deleteScans } = require('./dynamoService');
+const { extractFieldsWithOpenAI } = require('./openaiService');
 
-const s3 = new AWS.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION
-});
+const s3 = new AWS.S3();
 
 const handleScan = async (req, res) => {
     try {
@@ -40,11 +37,14 @@ const handleScan = async (req, res) => {
         const textractResult = await processScan({ buffer: file.buffer });
         console.log("Textract scan complete:", textractResult);
 
-        const allText = textractResult.text.join('\n');
+        // Prepare textArray for OpenAI extraction
+        const textArray = Object.values(textractResult.fields);
 
-        console.log("Extracting fields with OpenAI...");
-        const fields = await extractFieldsWithOpenAI([allText]);
-        console.log("Field extraction complete:", fields);
+        const base64Image = file.buffer.toString('base64');
+
+        console.log("Starting OpenAI extraction with base64 image..."); // Add this line
+        const openaiResult = await extractFieldsWithOpenAI(base64Image, textArray);
+        console.log("OpenAI extraction complete:", openaiResult);
 
         const createdAt = new Date().toISOString(); // Ensure createdAt is included
 
@@ -53,14 +53,12 @@ const handleScan = async (req, res) => {
             id: uuidv4(),
             fileName: file.originalname,
             s3Url,
-            invoiceDate: fields.invoiceDate,
-            invoiceNumber: fields.invoiceNumber,
-            totalAmount: fields.totalAmount,
-            classification: fields.classification,
+            textractResult: textractResult.fields,
+            openaiResult,
             createdAt
         });
 
-        res.status(200).send({ message: "Scan and extraction successful", fields, s3Url });
+        res.status(200).send({ message: "Scan and extraction successful", textractResult, openaiResult, s3Url });
     } catch (error) {
         console.error("Error scanning file:", error);
         res.status(500).send({ error: "Failed to scan and extract fields from file" });
