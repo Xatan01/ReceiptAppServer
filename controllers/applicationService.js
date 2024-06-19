@@ -40,10 +40,8 @@ const handleScan = async (req, res) => {
         // Prepare textArray for OpenAI extraction
         const textArray = Object.values(textractResult.fields);
 
-        const base64Image = file.buffer.toString('base64');
-
-        console.log("Starting OpenAI extraction with base64 image..."); // Add this line
-        const openaiResult = await extractFieldsWithOpenAI(base64Image, textArray);
+        console.log("Starting OpenAI extraction with S3 URL...");
+        const openaiResult = await extractFieldsWithOpenAI(s3Url, textArray);
         console.log("OpenAI extraction complete:", openaiResult);
 
         const createdAt = new Date().toISOString(); // Ensure createdAt is included
@@ -58,12 +56,13 @@ const handleScan = async (req, res) => {
             createdAt
         });
 
-        res.status(200).send({ message: "Scan and extraction successful", textractResult, openaiResult, s3Url });
+        res.status(200).send({ message: "Scan and extraction successful", textractResult: textractResult.fields, openaiResult, s3Url });
     } catch (error) {
         console.error("Error scanning file:", error);
         res.status(500).send({ error: "Failed to scan and extract fields from file" });
     }
 };
+
 
 const handleHistory = async (req, res) => {
     try {

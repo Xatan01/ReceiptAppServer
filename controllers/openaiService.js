@@ -5,7 +5,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-async function extractFieldsWithOpenAI(base64Image, textArray) {
+async function extractFieldsWithOpenAI(s3Url, textArray) {
   try {
     const messages = [
       {
@@ -30,9 +30,9 @@ async function extractFieldsWithOpenAI(base64Image, textArray) {
           { "Invoice Date": "", "Invoice Number": "", "Total Amount": "", "Classification": "" }`
           },
           {
-            type: "image_base64",
-            image_base64: {
-              "base64": base64Image,
+            type: "image_url",
+            image_url: {
+              "url": s3Url,
             },
           },
         ],
