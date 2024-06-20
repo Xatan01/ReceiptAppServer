@@ -22,7 +22,10 @@ const deleteScans = async (items) => {
     const deletePromises = items.map(item => {
         const params = {
             TableName: TABLE_NAME,
-            Key: { id: item.id }
+            Key: { 
+                id: item.id, 
+                createdAt: item.createdAt 
+            }
         };
         return dynamoDb.delete(params).promise();
     });
