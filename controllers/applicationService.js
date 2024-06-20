@@ -51,6 +51,7 @@ const handleScan = async (req, res) => {
             id: uuidv4(),
             fileName: file.originalname,
             s3Url,
+            s3Key, // Include the s3Key
             textractResult: textractResult.fields,
             openaiResult,
             createdAt
@@ -62,6 +63,7 @@ const handleScan = async (req, res) => {
         res.status(500).send({ error: "Failed to scan and extract fields from file" });
     }
 };
+
 
 
 const handleHistory = async (req, res) => {
@@ -80,6 +82,7 @@ const handleDeleteSelected = async (req, res) => {
         if (!Array.isArray(items) || items.length === 0) {
             return res.status(400).send({ error: "No items provided for deletion" });
         }
+
         await deleteScans(items);
         res.status(200).send({ message: "Selected scans deleted successfully" });
     } catch (error) {

@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk');
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
+const s3 = new AWS.S3();
 const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME;
 
 const saveScan = async (scanDetails) => {
@@ -20,15 +21,25 @@ const getScanHistory = async () => {
 
 const deleteScans = async (items) => {
     const deletePromises = items.map(item => {
-        const params = {
+        const dynamoParams = {
             TableName: TABLE_NAME,
             Key: { 
                 id: item.id, 
                 createdAt: item.createdAt 
             }
         };
-        return dynamoDb.delete(params).promise();
+
+        const s3Params = {
+            Bucket: process.env.S3_BUCKET_NAME,
+            Key: item.s3Key
+        };
+
+        return Promise.all([
+            dynamoDb.delete(dynamoParams).promise(),
+            s3.deleteObject(s3Params).promise()
+        ]);
     });
+    
     await Promise.all(deletePromises);
 };
 
