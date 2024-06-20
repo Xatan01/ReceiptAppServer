@@ -39,8 +39,6 @@ async function extractFieldsWithOpenAI(s3Url, textArray) {
       },
     ];
 
-    console.log("Sending request to OpenAI with message:", JSON.stringify(messages, null, 2));
-
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: messages,
@@ -49,7 +47,6 @@ async function extractFieldsWithOpenAI(s3Url, textArray) {
     });
 
     let result = response.choices[0].message.content.trim();
-    console.log("OpenAI response:", result);
 
     // Use regex to remove markdown markers
     result = result.replace(/```json\n?|```/g, '').trim();
